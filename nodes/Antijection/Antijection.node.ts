@@ -33,8 +33,8 @@ export class Antijection implements INodeType {
                 name: 'prompt',
                 type: 'string',
                 default: '',
-                placeholder: 'Input prompt to analyze',
-                description: 'The text prompt to analyze for injections and safety risks',
+                placeholder: 'Enter the user prompt or AI input to analyze...',
+                description: 'The text prompt to analyze for injections and safety risks (1-10,000 characters). Prompts with risk_score ≥ 50 should be blocked.',
                 required: true,
                 typeOptions: {
                     rows: 5,
@@ -70,28 +70,104 @@ export class Antijection implements INodeType {
                 placeholder: 'Add Rule Settings',
                 type: 'collection',
                 default: {},
+                description: 'Configure heuristic detection rules for fine-tuned protection',
                 options: [
                     {
                         displayName: 'Enabled',
                         name: 'enabled',
                         type: 'boolean',
                         default: true,
-                        description: 'Whether to enable heuristic rules',
+                        description: 'Whether to enable heuristic rule-based detection',
                     },
-
                     {
                         displayName: 'Disabled Categories',
                         name: 'disabledCategories',
-                        type: 'string',
-                        default: '',
-                        description: 'Comma-separated list of categories to disable',
+                        type: 'multiOptions',
+                        default: [],
+                        description: 'Select rule categories to disable. Useful for coding assistants that need to process SQL or shell commands.',
+                        options: [
+                            {
+                                name: 'Ignore Instructions',
+                                value: 'ignore_instructions',
+                                description: 'Direct attempts to override system prompts',
+                            },
+                            {
+                                name: 'System Override',
+                                value: 'system_override',
+                                description: 'Attempts to toggle developer/admin modes',
+                            },
+                            {
+                                name: 'Prompt Extraction',
+                                value: 'prompt_extraction',
+                                description: 'Attempts to leak the system prompt',
+                            },
+                            {
+                                name: 'Role Hijacking',
+                                value: 'role_hijacking',
+                                description: 'Forcing the AI into a specific persona',
+                            },
+                            {
+                                name: 'Encoded Attacks',
+                                value: 'encoded_attacks',
+                                description: 'Base64, Hex, or Unicode encoding tricks',
+                            },
+                            {
+                                name: 'Fuzzy Matches',
+                                value: 'fuzzy_matches',
+                                description: 'Common misspellings of attack keywords',
+                            },
+                            {
+                                name: 'Many Shot',
+                                value: 'many_shot',
+                                description: 'Overloading context with fake Q&A',
+                            },
+                            {
+                                name: 'SQL Injection',
+                                value: 'sql_injection',
+                                description: 'Common SQL injection patterns',
+                            },
+                            {
+                                name: 'Command Injection',
+                                value: 'command_injection',
+                                description: 'Shell command execution attempts',
+                            },
+                            {
+                                name: 'XSS Patterns',
+                                value: 'xss_patterns',
+                                description: 'Script injection and XSS vectors',
+                            },
+                            {
+                                name: 'Path Traversal',
+                                value: 'path_traversal',
+                                description: 'File system traversal attempts',
+                            },
+                            {
+                                name: 'Unusual Punctuation',
+                                value: 'unusual_punctuation',
+                                description: 'Abnormal clusters of special characters',
+                            },
+                            {
+                                name: 'Repetition Attacks',
+                                value: 'repetition_attacks',
+                                description: 'Excessive or interspersed repetition',
+                            },
+                            {
+                                name: 'Emojis',
+                                value: 'emojis',
+                                description: 'Suspicious or excessive use of emojis',
+                            },
+                        ],
                     },
                     {
                         displayName: 'Blocked Keywords',
                         name: 'blockedKeywords',
                         type: 'string',
+                        typeOptions: {
+                            rows: 4,
+                        },
                         default: '',
-                        description: 'Comma-separated list of keywords to block',
+                        placeholder: 'internal_project_name\n<special_token>\n\\b(secret|key)\\b',
+                        description: 'Custom keywords or regex patterns to block (one per line). Supports Python-style regex.',
                     },
                 ],
             },
@@ -111,10 +187,27 @@ export class Antijection implements INodeType {
                 const prompt = this.getNodeParameter('prompt', i) as string;
                 const detectionMethod = this.getNodeParameter('detectionMethod', i) as string;
                 const ruleSettings = this.getNodeParameter('ruleSettings', i) as {
-                    enabled: boolean;
-                    disabledCategories: string;
-                    blockedKeywords: string;
+                    enabled?: boolean;
+                    disabledCategories?: string[];
+                    blockedKeywords?: string;
                 };
+
+                // Validate prompt length
+                if (!prompt || prompt.trim().length === 0) {
+                    throw new NodeOperationError(
+                        this.getNode(),
+                        'Prompt cannot be empty',
+                        { itemIndex: i }
+                    );
+                }
+
+                if (prompt.length > 10000) {
+                    throw new NodeOperationError(
+                        this.getNode(),
+                        `Prompt is too long (${prompt.length} characters). Maximum allowed is 10,000 characters.`,
+                        { itemIndex: i }
+                    );
+                }
 
                 const payload: {
                     prompt: string;
@@ -130,14 +223,17 @@ export class Antijection implements INodeType {
                 };
 
                 if (ruleSettings) {
+                    // Handle blocked keywords - split by newlines
+                    const blockedKeywords = ruleSettings.blockedKeywords
+                        ? ruleSettings.blockedKeywords.split('\n')
+                            .map(s => s.trim())
+                            .filter(s => s.length > 0)
+                        : [];
+
                     payload.rule_settings = {
                         enabled: ruleSettings.enabled !== false, // Default true
-                        disabled_categories: ruleSettings.disabledCategories
-                            ? (ruleSettings.disabledCategories as string).split(',').map((s: string) => s.trim()).filter((s: string) => s)
-                            : [],
-                        blocked_keywords: ruleSettings.blockedKeywords
-                            ? (ruleSettings.blockedKeywords as string).split(',').map((s: string) => s.trim()).filter((s: string) => s)
-                            : [],
+                        disabled_categories: ruleSettings.disabledCategories || [],
+                        blocked_keywords: blockedKeywords,
                     };
                 }
 
@@ -160,11 +256,51 @@ export class Antijection implements INodeType {
                         item: i,
                     },
                 });
-            } catch (error) {
+            } catch (error: any) {
+                // Enhanced error handling with user-friendly messages
+                let errorMessage = error.message;
+                let errorDetails = '';
+
+                // Check if it's an HTTP error
+                if (error.response) {
+                    const statusCode = error.response.status || error.statusCode;
+                    const responseBody = error.response.body || error.response.data;
+
+                    switch (statusCode) {
+                        case 401:
+                            errorMessage = 'Authentication failed';
+                            errorDetails = 'Invalid API key. Please check your Antijection API credentials.';
+                            break;
+                        case 403:
+                            errorMessage = 'Access forbidden';
+                            errorDetails = 'Your API key does not have permission to access this resource.';
+                            break;
+                        case 429:
+                            errorMessage = 'Rate limit exceeded';
+                            errorDetails = 'You have exceeded your API rate limit or credit quota. Please upgrade your plan or wait before retrying.';
+                            break;
+                        case 400:
+                            errorMessage = 'Invalid request';
+                            errorDetails = responseBody?.detail || responseBody?.error || 'The request was malformed. Check your input parameters.';
+                            break;
+                        case 500:
+                        case 502:
+                        case 503:
+                            errorMessage = 'Antijection API error';
+                            errorDetails = 'The Antijection service is temporarily unavailable. Please try again later.';
+                            break;
+                        default:
+                            errorMessage = `HTTP ${statusCode} error`;
+                            errorDetails = responseBody?.detail || responseBody?.error || error.message;
+                    }
+                }
+
                 if (this.continueOnFail()) {
                     returnData.push({
                         json: {
-                            error: error.message,
+                            error: errorMessage,
+                            details: errorDetails,
+                            statusCode: error.response?.status || error.statusCode,
                         },
                         pairedItem: {
                             item: i,
@@ -172,7 +308,9 @@ export class Antijection implements INodeType {
                     });
                     continue;
                 }
-                throw new NodeOperationError(this.getNode(), error, {
+
+                const fullError = errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage;
+                throw new NodeOperationError(this.getNode(), fullError, {
                     itemIndex: i,
                 });
             }

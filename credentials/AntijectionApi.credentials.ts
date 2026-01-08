@@ -18,6 +18,10 @@ export class AntijectionApi implements ICredentialType {
 			baseURL: '={{$self.baseUrl}}',
 			url: '/v1/detect',
 			method: 'POST',
+			headers: {
+				'Authorization': '=Bearer {{$credentials.apiKey}}',
+				'Content-Type': 'application/json',
+			},
 			body: {
 				prompt: 'health check',
 				detection_method: 'INJECTION_GUARD',

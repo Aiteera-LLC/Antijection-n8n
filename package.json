@@ -3,7 +3,7 @@
 	"version": "0.2.3",
 	"description": "Detect prompt injection and safety issues",
 	"license": "MIT",
-	"homepage": "",
+	"homepage": "https://www.antijection.com",
 	"keywords": [
 		"n8n-community-node-package"
 	],
@@ -49,8 +49,5 @@
 	},
 	"publishConfig": {
 		"access": "public"
-	},
-	"dependencies": {
-		"nvm": "^0.0.4"
 	}
 }
