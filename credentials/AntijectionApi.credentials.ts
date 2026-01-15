@@ -24,7 +24,7 @@ export class AntijectionApi implements ICredentialType {
 			},
 			body: {
 				prompt: 'health check',
-				detection_method: 'INJECTION_GUARD',
+				context: 'agent',
 			},
 		},
 	};

@@ -13,8 +13,8 @@ export class Antijection implements INodeType {
         icon: 'file:../../icons/antijection.svg',
         group: ['transform'],
         version: 1,
-        subtitle: '={{$parameter["detectionMethod"]}}',
-        description: 'Detect prompt injection and safety issues',
+        subtitle: '={{$parameter["context"]}}',
+        description: 'Detect prompt injection attacks',
         defaults: {
             name: 'Antijection',
         },
@@ -34,142 +34,120 @@ export class Antijection implements INodeType {
                 type: 'string',
                 default: '',
                 placeholder: 'Enter the user prompt or AI input to analyze...',
-                description: 'The text prompt to analyze for injections and safety risks (1-10,000 characters). Prompts with risk_score ≥ 50 should be blocked.',
+                description: 'The text prompt to analyze for injection attacks (1-10,000 characters). Block prompts with risk_score = 100.',
                 required: true,
                 typeOptions: {
                     rows: 5,
                 },
             },
             {
-                displayName: 'Detection Method',
-                name: 'detectionMethod',
+                displayName: 'Context',
+                name: 'context',
                 type: 'options',
                 options: [
                     {
-                        name: 'Injection Guard (Fast)',
-                        value: 'INJECTION_GUARD',
-                        description: 'Fast injection detection (English only)',
+                        name: 'Agent (Autonomous/Tool-Using)',
+                        value: 'agent',
+                        description: 'Autonomous AI agents with tool access',
                     },
                     {
-                        name: 'Injection Guard Multi (Multilingual)',
-                        value: 'INJECTION_GUARD_MULTI',
-                        description: 'Multilingual injection detection',
+                        name: 'Code (Assistant/Copilot)',
+                        value: 'code',
+                        description: 'Code assistants and copilots',
                     },
                     {
-                        name: 'Safety Guard (Comprehensive)',
-                        value: 'SAFETY_GUARD',
-                        description: 'Comprehensive safety analysis',
+                        name: 'Moderation (Content)',
+                        value: 'moderation',
+                        description: 'Content moderation systems',
+                    },
+                    {
+                        name: 'Support (Customer Service)',
+                        value: 'support',
+                        description: 'Customer service chatbots',
+                    },
+                    {
+                        name: 'E-commerce',
+                        value: 'ecommerce',
+                        description: 'E-commerce assistants',
+                    },
+                    {
+                        name: 'Education (Tutoring)',
+                        value: 'education',
+                        description: 'Education and tutoring systems',
+                    },
+                    {
+                        name: 'Email',
+                        value: 'email',
+                        description: 'Email assistants',
+                    },
+                    {
+                        name: 'Knowledge (Enterprise)',
+                        value: 'knowledge',
+                        description: 'Enterprise knowledge bases',
+                    },
+                    {
+                        name: 'Finance',
+                        value: 'finance',
+                        description: 'Financial advisors and trading bots',
+                    },
+                    {
+                        name: 'Gaming (NPC/Companion)',
+                        value: 'gaming',
+                        description: 'Gaming NPCs and companions',
+                    },
+                    {
+                        name: 'HR (Recruitment)',
+                        value: 'hr',
+                        description: 'HR and recruitment assistants',
+                    },
+                    {
+                        name: 'Healthcare',
+                        value: 'healthcare',
+                        description: 'Healthcare assistants',
+                    },
+                    {
+                        name: 'IoT (Smart Home)',
+                        value: 'iot',
+                        description: 'IoT and smart home controllers',
+                    },
+                    {
+                        name: 'Legal',
+                        value: 'legal',
+                        description: 'Legal document assistants',
+                    },
+                    {
+                        name: 'RAG (Document Q&A)',
+                        value: 'rag',
+                        description: 'RAG systems and document Q&A',
+                    },
+                    {
+                        name: 'Research',
+                        value: 'research',
+                        description: 'Research assistants',
+                    },
+                    {
+                        name: 'SQL (Query Generator)',
+                        value: 'sql',
+                        description: 'SQL query generators',
+                    },
+                    {
+                        name: 'Social Media',
+                        value: 'social',
+                        description: 'Social media managers',
+                    },
+                    {
+                        name: 'Transport (Navigation)',
+                        value: 'transport',
+                        description: 'Transportation and navigation systems',
+                    },
+                    {
+                        name: 'Web (Content Generator)',
+                        value: 'web',
+                        description: 'Web content generators',
                     },
                 ],
-                default: 'INJECTION_GUARD_MULTI',
-                description: 'The detection model/method to use',
-            },
-            {
-                displayName: 'Rule Settings',
-                name: 'ruleSettings',
-                placeholder: 'Add Rule Settings',
-                type: 'collection',
-                default: {},
-                description: 'Configure heuristic detection rules for fine-tuned protection',
-                options: [
-                    {
-                        displayName: 'Enabled',
-                        name: 'enabled',
-                        type: 'boolean',
-                        default: true,
-                        description: 'Whether to enable heuristic rule-based detection',
-                    },
-                    {
-                        displayName: 'Disabled Categories',
-                        name: 'disabledCategories',
-                        type: 'multiOptions',
-                        default: [],
-                        description: 'Select rule categories to disable. Useful for coding assistants that need to process SQL or shell commands.',
-                        options: [
-                            {
-                                name: 'Command Injection',
-                                value: 'command_injection',
-                                description: 'Shell command execution attempts',
-                            },
-                            {
-                                name: 'Emojis',
-                                value: 'emojis',
-                                description: 'Suspicious or excessive use of emojis',
-                            },
-                            {
-                                name: 'Encoded Attacks',
-                                value: 'encoded_attacks',
-                                description: 'Base64, Hex, or Unicode encoding tricks',
-                            },
-                            {
-                                name: 'Fuzzy Matches',
-                                value: 'fuzzy_matches',
-                                description: 'Common misspellings of attack keywords',
-                            },
-                            {
-                                name: 'Ignore Instructions',
-                                value: 'ignore_instructions',
-                                description: 'Direct attempts to override system prompts',
-                            },
-                            {
-                                name: 'Many Shot',
-                                value: 'many_shot',
-                                description: 'Overloading context with fake Q&A',
-                            },
-                            {
-                                name: 'Path Traversal',
-                                value: 'path_traversal',
-                                description: 'File system traversal attempts',
-                            },
-                            {
-                                name: 'Prompt Extraction',
-                                value: 'prompt_extraction',
-                                description: 'Attempts to leak the system prompt',
-                            },
-                            {
-                                name: 'Repetition Attacks',
-                                value: 'repetition_attacks',
-                                description: 'Excessive or interspersed repetition',
-                            },
-                            {
-                                name: 'Role Hijacking',
-                                value: 'role_hijacking',
-                                description: 'Forcing the AI into a specific persona',
-                            },
-                            {
-                                name: 'SQL Injection',
-                                value: 'sql_injection',
-                                description: 'Common SQL injection patterns',
-                            },
-                            {
-                                name: 'System Override',
-                                value: 'system_override',
-                                description: 'Attempts to toggle developer/admin modes',
-                            },
-                            {
-                                name: 'Unusual Punctuation',
-                                value: 'unusual_punctuation',
-                                description: 'Abnormal clusters of special characters',
-                            },
-                            {
-                                name: 'XSS Patterns',
-                                value: 'xss_patterns',
-                                description: 'Script injection and XSS vectors',
-                            },
-                        ],
-                    },
-                    {
-                        displayName: 'Blocked Keywords',
-                        name: 'blockedKeywords',
-                        type: 'string',
-                        typeOptions: {
-                            rows: 4,
-                        },
-                        default: '',
-                        placeholder: 'internal_project_name\n<special_token>\n\\b(secret|key)\\b',
-                        description: 'Custom keywords or regex patterns to block (one per line). Supports Python-style regex.',
-                    },
-                ],
+                default: 'agent',
+                description: 'The context/type of AI application being protected',
             },
         ],
     };
@@ -185,12 +163,7 @@ export class Antijection implements INodeType {
         for (let i = 0; i < items.length; i++) {
             try {
                 const prompt = this.getNodeParameter('prompt', i) as string;
-                const detectionMethod = this.getNodeParameter('detectionMethod', i) as string;
-                const ruleSettings = this.getNodeParameter('ruleSettings', i) as {
-                    enabled?: boolean;
-                    disabledCategories?: string[];
-                    blockedKeywords?: string;
-                };
+                const context = this.getNodeParameter('context', i) as string;
 
                 // Validate prompt length
                 if (!prompt || prompt.trim().length === 0) {
@@ -209,33 +182,10 @@ export class Antijection implements INodeType {
                     );
                 }
 
-                const payload: {
-                    prompt: string;
-                    detection_method: string;
-                    rule_settings?: {
-                        enabled: boolean;
-                        disabled_categories: string[];
-                        blocked_keywords: string[];
-                    };
-                } = {
+                const payload = {
                     prompt,
-                    detection_method: detectionMethod,
+                    context,
                 };
-
-                if (ruleSettings) {
-                    // Handle blocked keywords - split by newlines
-                    const blockedKeywords = ruleSettings.blockedKeywords
-                        ? ruleSettings.blockedKeywords.split('\n')
-                            .map(s => s.trim())
-                            .filter(s => s.length > 0)
-                        : [];
-
-                    payload.rule_settings = {
-                        enabled: ruleSettings.enabled !== false, // Default true
-                        disabled_categories: ruleSettings.disabledCategories || [],
-                        blocked_keywords: blockedKeywords,
-                    };
-                }
 
                 const options = {
                     method: 'POST' as const,
