@@ -56,17 +56,7 @@ export class Antijection implements INodeType {
                         description: 'Code assistants and copilots',
                     },
                     {
-                        name: 'Moderation (Content)',
-                        value: 'moderation',
-                        description: 'Content moderation systems',
-                    },
-                    {
-                        name: 'Support (Customer Service)',
-                        value: 'support',
-                        description: 'Customer service chatbots',
-                    },
-                    {
-                        name: 'E-commerce',
+                        name: 'E-Commerce',
                         value: 'ecommerce',
                         description: 'E-commerce assistants',
                     },
@@ -81,11 +71,6 @@ export class Antijection implements INodeType {
                         description: 'Email assistants',
                     },
                     {
-                        name: 'Knowledge (Enterprise)',
-                        value: 'knowledge',
-                        description: 'Enterprise knowledge bases',
-                    },
-                    {
                         name: 'Finance',
                         value: 'finance',
                         description: 'Financial advisors and trading bots',
@@ -96,14 +81,14 @@ export class Antijection implements INodeType {
                         description: 'Gaming NPCs and companions',
                     },
                     {
-                        name: 'HR (Recruitment)',
-                        value: 'hr',
-                        description: 'HR and recruitment assistants',
-                    },
-                    {
                         name: 'Healthcare',
                         value: 'healthcare',
                         description: 'Healthcare assistants',
+                    },
+                    {
+                        name: 'HR (Recruitment)',
+                        value: 'hr',
+                        description: 'HR and recruitment assistants',
                     },
                     {
                         name: 'IoT (Smart Home)',
@@ -111,9 +96,19 @@ export class Antijection implements INodeType {
                         description: 'IoT and smart home controllers',
                     },
                     {
+                        name: 'Knowledge (Enterprise)',
+                        value: 'knowledge',
+                        description: 'Enterprise knowledge bases',
+                    },
+                    {
                         name: 'Legal',
                         value: 'legal',
                         description: 'Legal document assistants',
+                    },
+                    {
+                        name: 'Moderation (Content)',
+                        value: 'moderation',
+                        description: 'Content moderation systems',
                     },
                     {
                         name: 'RAG (Document Q&A)',
@@ -126,14 +121,19 @@ export class Antijection implements INodeType {
                         description: 'Research assistants',
                     },
                     {
+                        name: 'Social Media',
+                        value: 'social',
+                        description: 'Social media managers',
+                    },
+                    {
                         name: 'SQL (Query Generator)',
                         value: 'sql',
                         description: 'SQL query generators',
                     },
                     {
-                        name: 'Social Media',
-                        value: 'social',
-                        description: 'Social media managers',
+                        name: 'Support (Customer Service)',
+                        value: 'support',
+                        description: 'Customer service chatbots',
                     },
                     {
                         name: 'Transport (Navigation)',
